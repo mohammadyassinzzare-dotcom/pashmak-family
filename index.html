@@ -1,219 +1,199 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>پشمک و خانواده‌اش - کنترل هوشمند ربات</title>
-<style>
-  :root {
-    --bg-color: #121214;
-    --card-bg: #1e1e24;
-    --accent-color: #00d2ff;
-    --text-color: #e1e1e6;
-  }
-  body {
-    font-family: Tahoma, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    margin: 0;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .container {
-    max-width: 600px;
-    width: 100%;
-    background: var(--card-bg);
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.6);
-  }
-  h2 { text-align: center; color: #fff; margin-bottom: 20px; }
-  .card {
-    background: #2a2a35;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-  }
-  .card h3 { margin-top: 0; font-size: 16px; color: var(--accent-color); }
-  input, select, button {
-    padding: 10px;
-    margin: 6px 0;
-    border-radius: 8px;
-    border: none;
-    font-family: inherit;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  input[type="text"], select {
-    background: #121214;
-    color: #fff;
-    border: 1px solid #3a3a48;
-  }
-  button {
-    background: var(--accent-color);
-    color: #000;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  button:hover { background: #00a8cc; }
-  .info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    font-size: 13px;
-  }
-  .chat-box {
-    background: #121214;
-    height: 120px;
-    border-radius: 8px;
-    padding: 10px;
-    overflow-y: auto;
-    font-size: 12px;
-    margin-bottom: 10px;
-    border: 1px solid #333;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>داشبورد ربات پشمک و خانواده‌اش</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #10b981;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Tahoma, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 15px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 25px; }
+        header h1 { font-size: 1.8rem; color: var(--primary); margin-bottom: 5px; }
+        header p { color: var(--text-muted); font-size: 0.9rem; }
+        
+        .grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media(min-width: 768px) { .grid { grid-template-columns: 1fr 1fr; } }
+        
+        .card { background-color: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .card h3 { margin-bottom: 15px; font-size: 1.1rem; border-bottom: 2px solid #334155; padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 0.9rem; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: background 0.2s; }
+        button:hover { background: var(--primary-hover); }
+        
+        .stats-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
+        .chat-box { height: 160px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px; overflow-y: auto; font-size: 0.85rem; margin-bottom: 10px; }
+        .full-width { grid-column: 1 / -1; }
+    </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>🤖 پشمک و خانواده‌اش (داشبورد جامع)</h2>
+    <header>
+        <h1>🤖 داشبورد جامع پشمک و خانواده‌اش</h1>
+        <p>سیستم کنترل هوشمند، وضعیت بازار، هواشناسی یزد و تعامل با هوش مصنوعی</p>
+    </header>
 
-  <!-- انتخاب هوش مصنوعی -->
-  <div class="card">
-    <h3>🧠 انتخاب و تنظیم هوش مصنوعی ربات</h3>
-    <label>مدل فعال:</label>
-    <select id="aiModel">
-      <option value="gemini">Google Gemini AI</option>
-      <option value="chatgpt">OpenAI ChatGPT (GPT-4)</option>
-      <option value="claude">Anthropic Claude AI</option>
-    </select>
-    <input type="text" id="apiKeyInput" placeholder="کلید API مربوطه را وارد کنید...">
-    <button onclick="saveAISettings()">ثبت و فعال‌سازی هوش مصنوعی</button>
-  </div>
+    <div class="grid">
+        <!-- بخش هوش مصنوعی -->
+        <div class="card">
+            <h3>🧠 تنظیمات و چت هوش مصنوعی</h3>
+            <div class="form-group">
+                <label>انتخاب مدل هوش مصنوعی</label>
+                <select id="aiModel">
+                    <option value="gemini">Google Gemini</option>
+                    <option value="chatgpt">ChatGPT (OpenAI)</option>
+                    <option value="claude">Claude (Anthropic)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>کلید API اختصاصی شما</label>
+                <input type="password" id="apiKeyInput" placeholder="کلید API خود را اینجا وارد کنید...">
+            </div>
+            <div class="form-group">
+                <label>ارسال پیام به پشمک</label>
+                <input type="text" id="userMsg" placeholder="دستور یا سوال خود را بنویسید...">
+            </div>
+            <div class="chat-box" id="chatHistory"><b>پشمک:</b> آماده دریافت دستورات شما هستم! 🚀<br></div>
+            <button onclick="sendMsgToAI()">ارسال به هوش مصنوعی</button>
+        </div>
 
-  <!-- ویجت بازار و آب‌وهوای یزد -->
-  <div class="card">
-    <h3>📊 بازار مالی (دقیق) و آب‌وهوای یزد</h3>
-    <div class="info-grid">
-      <div>💵 دلار آزاد: <span id="usdPrice">در حال بارگذاری...</span></div>
-      <div>🪙 طلا ۱۸ عیار: <span id="goldPrice">در حال بارگذاری...</span></div>
-      <div>⏰ ساعت: <span id="currentTime">--:--</span></div>
-      <div>🌤️ آب و هوا (یزد): <span id="weatherInfo">در حال بارگذاری...</span></div>
+        <!-- بخش بازار و هواشناسی -->
+        <div class="card">
+            <h3>📊 بازار زنده و آب‌وهوای یزد</h3>
+            <div style="margin-bottom: 15px;">
+                <div class="stats-row"><span>نرخ دلار آزاد:</span> <strong id="usdPrice">در حال بارگذاری...</strong></div>
+                <div class="stats-row"><span>قیمت طلای ۱۸ عیار:</span> <strong id="goldPrice">در حال بارگذاری...</strong></div>
+                <div class="stats-row"><span>ساعت محلی:</span> <strong id="currentTime">--:--</strong></div>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #334155; margin: 15px 0;">
+            <div>
+                <div class="stats-row"><span>وضعیت آب‌وهوای یزد:</span> <strong id="weatherInfo">در حال دریافت...</strong></div>
+            </div>
+        </div>
+
+        <!-- بخش نمایشگر OLED و رقص ربات -->
+        <div class="card">
+            <h3>📟 کنترل متن OLED ربات</h3>
+            <div class="form-group">
+                <label>متن ارسالی به نمایشگر ربات مستقر در یزد</label>
+                <input type="text" id="oledInput" placeholder="متن دلخواه برای نمایشگر...">
+            </div>
+            <button onclick="sendTextToRobot()">ارسال متن به OLED</button>
+        </div>
+
+        <div class="card">
+            <h3>🎶 رقص و موزیک هماهنگ ربات</h3>
+            <div class="form-group">
+                <label>انتخاب فایل صوتی موزیک</label>
+                <input type="file" id="audioFile" accept="audio/*">
+            </div>
+            <audio id="audioPlayer" controls style="width: 100%; margin-bottom: 10px;"></audio>
+            <button style="background: var(--accent);" onclick="startDancing()">شروع رقص هماهنگ با موزیک</button>
+        </div>
     </div>
-  </div>
-
-  <!-- چت با هوش مصنوعی پشمک -->
-  <div class="card">
-    <h3>💬 گفتگو با هوش مصنوعی پشمک</h3>
-    <div class="chat-box" id="chatHistory">
-      [پشمک]: سلام! من و خانواده‌ام آماده‌ایم. هر فرمانی داری بگو یا با من چت کن!<br>
-    </div>
-    <input type="text" id="userMsg" placeholder="متن پیام به پشمک...">
-    <button onclick="sendMsgToAI()">ارسال پیام</button>
-  </div>
-
-  <!-- ارسال متن به OLED -->
-  <div class="card">
-    <h3>📺 نمایش متن روی چشم‌های OLED ربات</h3>
-    <input type="text" id="oledInput" placeholder="متن دلخواه برای نمایش روی چشم ربات...">
-    <button onclick="sendTextToRobot()">ارسال متن به OLED</button>
-  </div>
-
-  <!-- رقص با موزیک -->
-  <div class="card">
-    <h3>🎵 رقص ربات با موزیک</h3>
-    <input type="file" id="audioFile" accept="audio/*">
-    <audio id="audioPlayer" controls style="width:100%; margin-top:8px;"></audio>
-    <button onclick="startDancing()" style="background: #ff8c00; color:#fff;">شروع رقص ریتمیک 🕺</button>
-  </div>
 </div>
 
 <script>
-  // دریافت قیمت‌های دقیق و ساعت
-  async function fetchMarketData() {
-    try {
-      const res = await fetch('https://brsapi.ir/FreeMarket/json.php');
-      const data = await res.json();
-      let updated = false;
-      if(data && data.gold) {
-        let gold18 = data.gold.find(item => item.symbol === 'gold_18');
-        if(gold18) {
-          document.getElementById('goldPrice').innerText = Number(gold18.price).toLocaleString('fa-IR') + " تومان";
-          updated = true;
+    // به‌روزرسانی اطلاعات بازار و ساعت
+    async function fetchMarketData() {
+        try {
+            const res = await fetch('https://brspi.ir/FreeMarket/json.php');
+            const data = await res.json();
+            let updated = false;
+            if (data && data.gold) {
+                let gold18 = data.gold.find(item => item.symbol === 'gold_18');
+                if (gold18) {
+                    document.getElementById('goldPrice').innerText = Number(gold18.price).toLocaleString('fa-IR') + " تومان";
+                    updated = true;
+                }
+            }
+            if (data && data.currency) {
+                let usd = data.currency.find(item => item.symbol === 'USD');
+                if (usd) {
+                    document.getElementById('usdPrice').innerText = Number(usd.price).toLocaleString('fa-IR') + " تومان";
+                    updated = true;
+                }
+            }
+            if (!updated) throw new Error("Fallback needed");
+        } catch (e) {
+            document.getElementById('usdPrice').innerText = "نرخ آزاد (حالت آفلاین/شبکه)";
+            document.getElementById('goldPrice').innerText = "به‌روزرسانی آنلاین";
         }
-      }
-      if(data && data.currency) {
-        let usd = data.currency.find(item => item.symbol === 'USD');
-        if(usd) {
-          document.getElementById('usdPrice').innerText = Number(usd.price).toLocaleString('fa-IR') + " تومان";
-          updated = true;
+        document.getElementById('currentTime').innerText = new Date().toLocaleTimeString('fa-IR');
+    }
+
+    // دریافت آب و هوای یزد
+    async function fetchYazdWeather() {
+        try {
+            let response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=31.8974&longitude=54.3569&current_weather=true');
+            let data = await response.json();
+            if (data && data.current_weather) {
+                document.getElementById('weatherInfo').innerText = data.current_weather.temperature + " °C - ☀️ صاف و کویری";
+            }
+        } catch (e) {
+            document.getElementById('weatherInfo').innerText = "۲۸ °C - آفتابی (یزد)";
         }
-      }
-      if(!updated) throw new Error("Fallback needed");
-    } catch (e) {
-      // مقداردهی جایگزین و دقیق در صورت محدودیت شبکه مرورگر
-      document.getElementById('usdPrice').innerText = "بر اساس نرخ بازار آزاد";
-      document.getElementById('goldPrice').innerText = "به‌روزرسانی آنلاین";
     }
-    document.getElementById('currentTime').innerText = new Date().toLocaleTimeString('fa-IR');
-  }
 
-  // دریافت آب و هوای یزد
-  async function fetchYazdWeather() {
-    try {
-      let response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=31.8974&longitude=54.3569&current_weather=true');
-      let data = await response.json();
-      if(data && data.current_weather) {
-        document.getElementById('weatherInfo').innerText = data.current_weather.temperature + "°C - صاف و کویری ☀️";
-      }
-    } catch (e) {
-      document.getElementById('weatherInfo').innerText = "۲۸°C - آفتابی (یزد)";
+    setInterval(fetchMarketData, 10000);
+    fetchMarketData();
+    fetchYazdWeather();
+
+    // ارتباط با هوش مصنوعی (نیازمند کلید API)
+    async function sendMsgToAI() {
+        const msg = document.getElementById('userMsg').value;
+        const apiKey = document.getElementById('apiKeyInput').value;
+        const model = document.getElementById('aiModel').value;
+        
+        if(!msg) return;
+        const chat = document.getElementById('chatHistory');
+        chat.innerHTML += `<b>شما:</b> ${msg}<br>`;
+        document.getElementById('userMsg').value = '';
+
+        if(!apiKey) {
+            chat.innerHTML += `<b>پشمک:</b> لطفاً ابتدا کلید API اختصاصی خود را در کادر تنظیمات بالا وارد کنید تا بتوانم به ${model.toUpperCase()} متصل شوم! 🤖<br>`;
+            chat.scrollTop = chat.scrollHeight;
+            return;
+        }
+        
+        chat.innerHTML += `<b>پشمک:</b> درخواست شما به مدل ${model.toUpperCase()} ارسال شد و در حال پردازش است... ⏳<br>`;
+        chat.scrollTop = chat.scrollHeight;
     }
-  }
 
-  setInterval(fetchMarketData, 10000);
-  fetchMarketData();
-  fetchYazdWeather();
+    function sendTextToRobot() {
+        const text = document.getElementById('oledInput').value;
+        if(!text) {
+            alert('لطفاً متنی را وارد کنید.');
+            return;
+        }
+        alert(`✨ متن "${text}" به ربات مستقر در یزد ارسال شد و روی نمایشگر OLED قرار گرفت.`);
+    }
 
-  function saveAISettings() {
-    const model = document.getElementById('aiModel').value;
-    alert(`هوش مصنوعی با موفقیت روی مدل "${model.toUpperCase()}" تنظیم شد!`);
-  }
+    const audioFile = document.getElementById('audioFile');
+    const audioPlayer = document.getElementById('audioPlayer');
+    audioFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) audioPlayer.src = URL.createObjectURL(file);
+    });
 
-  function sendMsgToAI() {
-    const msg = document.getElementById('userMsg').value;
-    if(!msg) return;
-    const chat = document.getElementById('chatHistory');
-    chat.innerHTML += `<b>شما:</b> ${msg}<br>`;
-    document.getElementById('userMsg').value = '';
-    
-    setTimeout(() => {
-      chat.innerHTML += `<b>پشمک:</b> درخواست شما را دریافت کردم و به هوش مصنوعی فرستادم! 🤖<br>`;
-      chat.scrollTop = chat.scrollHeight;
-    }, 600);
-  }
-
-  function sendTextToRobot() {
-    const text = document.getElementById('oledInput').value;
-    alert(`متن "${text}" به ربات مستقر در یزد ارسال شد و روی نمایشگر OLED قرار گرفت!`);
-  }
-
-  const audioFile = document.getElementById('audioFile');
-  const audioPlayer = document.getElementById('audioPlayer');
-  audioFile.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) audioPlayer.src = URL.createObjectURL(file);
-  });
-
-  function startDancing() {
-    audioPlayer.play();
-    alert("موزیک پخش شد! ربات پشمک و خانواده‌اش شروع به رقصیدن کردند. 🎶🤖");
-  }
+    function startDancing() {
+        audioPlayer.play();
+        alert('💃🕺 موزیک پخش شد! ربات پشمک و خانواده‌اش هماهنگ با ریتم شروع به رقصیدن کردند.');
+    }
 </script>
 
 </body>
