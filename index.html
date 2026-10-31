@@ -1,0 +1,484 @@
+  /* ---------- robot state ---------- */
+  document.querySelectorAll('[data-state]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const value = btn.dataset.state;
+      sendCommand({ command: 'STATE', value }, { dedupe: false });
+      toast('وضعیت: ' + value);
+    });
+  });
+
+  /* ---------- Persian digits helper ---------- */
+  const FA_DIGITS = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+  function toFa(n) {
+    return String(n).replace(/\d/g, d => FA_DIGITS[+d]);
+  }
+  function fmtNum(n) {
+    if (n == null || isNaN(n)) return '—';
+    return toFa(Math.round(n).toLocaleString('en-US'));
+  }
+
+  /* ---------- Clock (Asia/Tehran) ---------- */
+  const clockTimeEl = $('clockTime');
+  const clockDateEl = $('clockDate');
+
+  const timeFmt = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Tehran',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false
+  });
+  const jalaliDateFmt = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+    timeZone: 'Asia/Tehran',
+    weekday: 'long',
+    year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  function tickClock() {
+    const now = new Date();
+    // time — force latin digits then convert to Persian
+    const parts = timeFmt.formatToParts(now);
+    let hh = '00', mm = '00', ss = '00';
+    for (const p of parts) {
+      if (p.type === 'hour') hh = p.value;
+      if (p.type === 'minute') mm = p.value;
+      if (p.type === 'second') ss = p.value;
+    }
+    clockTimeEl.textContent = toFa(hh) + ':' + toFa(mm) + ':' + toFa(ss);
+    try {
+      clockDateEl.textContent = jalaliDateFmt.format(now);
+    } catch {
+      clockDateEl.textContent = now.toLocaleDateString('fa-IR');
+    }
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  /* ---------- Weather (Yazd, Open-Meteo) ---------- */
+  const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=31.8974&longitude=54.3569&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=Asia%2FTehran';
+  const weatherBodyEl = $('weatherBody');
+  const weatherUpdatedEl = $('weatherUpdated');
+
+  // WMO weather code → Persian label + emoji
+  const WMO = {
+    0: ['آسمان صاف', '☀️'],
+    1: ['عمدتاً صاف', '🌤️'],
+    2: ['نیمه‌ابری', '⛅'],
+    3: ['ابری', '☁️'],
+    45: ['مه', '🌫️'],
+    48: ['مه یخ‌زده', '🌫️'],
+    51: ['نم‌نم سبک', '🌦️'],
+    53: ['نم‌نم', '🌦️'],
+    55: ['نم‌نم شدید', '🌧️'],
+    56: ['نم‌نم یخ‌زده سبک', '🌧️'],
+    57: ['نم‌نم یخ‌زده', '🌧️'],
+    61: ['باران سبک', '🌧️'],
+    63: ['باران', '🌧️'],
+    65: ['باران شدید', '🌧️'],
+    66: ['باران یخ‌زده سبک', '🌧️'],
+    67: ['باران یخ‌زده', '🌧️'],
+    71: ['برف سبک', '🌨️'],
+    73: ['برف', '🌨️'],
+    75: ['برف شدید', '❄️'],
+    77: ['دانه‌های برف', '🌨️'],
+    80: ['رگبار سبک', '🌦️'],
+    81: ['رگبار', '🌧️'],
+    82: ['رگبار شدید', '⛈️'],
+    85: ['رگبار برف', '🌨️'],
+    86: ['رگبار برف شدید', '❄️'],
+    95: ['رعدوبرق', '⛈️'],
+    96: ['رعدوبرق با تگرگ', '⛈️'],
+    99: ['رعدوبرق شدید با تگرگ', '⛈️']
+  };
+
+  let weatherTimer = null;
+  let weatherInflight = false;
+
+  async function fetchWeather() {
+    if (weatherInflight) return;
+    weatherInflight = true;
+    try {
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 10000);
+      const r = await fetch(WEATHER_URL, { signal: ctrl.signal, cache: 'no-store' });
+      clearTimeout(tid);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      const c = data && data.current;
+      if (!c) throw new Error('ساختار پاسخ نامعتبر');
+
+      const [label, emoji] = WMO[c.weather_code] || ['نامشخص', '🌡️'];
+
+      weatherBodyEl.innerHTML =
+        '<div class="weather-main">' +
+          '<div><div style="font-size:13px;">' + emoji + ' ' + label + '</div>' +
+          '<div class="muted">دمای احساسی: ' + toFa(Math.round(c.apparent_temperature)) + '°</div></div>' +
+          '<div class="temp">' + toFa(Math.round(c.temperature_2m)) + '°</div>' +
+        '</div>' +
+        '<div class="weather-grid">' +
+          '<div class="weather-item"><span>💧 رطوبت</span><span>' + toFa(Math.round(c.relative_humidity_2m)) + '٪</span></div>' +
+          '<div class="weather-item"><span>🌬️ باد</span><span>' + toFa(Math.round(c.wind_speed_10m)) + ' km/h</span></div>' +
+        '</div>';
+
+      weatherUpdatedEl.textContent = 'آخرین دریافت: ' + toFa(new Date().toLocaleTimeString('fa-IR'));
+    } catch (e) {
+      const offline = !navigator.onLine;
+      weatherBodyEl.innerHTML = '<p class="error-msg">' +
+        (offline ? 'اینترنت قطع است. آب‌وهوا در دسترس نیست.' : 'دریافت آب‌وهوا ناموفق بود: ' + (e.message || 'خطای شبکه')) +
+        '</p>';
+    } finally {
+      weatherInflight = false;
+      if (weatherTimer) clearTimeout(weatherTimer);
+      weatherTimer = setTimeout(fetchWeather, 10 * 60 * 1000);
+    }
+  }
+
+  /* ---------- Markets (Iran) ---------- */
+  const MARKET_URL = 'https://raw.githubusercontent.com/iran-market/iran-market.github.io/main/data/popular.json';
+  const MARKET_IDS = {
+    USD_IRR_FREE: 'دلار آزاد',
+    GOLD_18K_IRR: 'طلای ۱۸ عیار',
+    COIN_EMAMI_IRR: 'سکه امامی'
+  };
+  const marketBodyEl = $('marketBody');
+  const marketMetaEl = $('marketMeta');
+  let marketTimer = null;
+  let marketInflight = false;
+
+  // Try to extract an item from varied possible JSON shapes
+  function extractItem(json, id) {
+    if (!json) return null;
+    // Common shapes:
+    //  { items: [{ id|symbol, price|value, change_percent|change, timestamp|updated_at }] }
+    //  { id: { price, change, ... } }
+    //  [ { id|symbol, price } ]
+    const candidates = [];
+    if (Array.isArray(json)) candidates.push(...json);
+    if (Array.isArray(json.items)) candidates.push(...json.items);
+    if (Array.isArray(json.data)) candidates.push(...json.data);
+    if (json[id]) candidates.push(Object.assign({ id }, json[id]));
+    if (json.data && json.data[id]) candidates.push(Object.assign({ id }, json.data[id]));
+
+    for (const c of candidates) {
+      if (!c || typeof c !== 'object') continue;
+      const cid = c.id || c.symbol || c.key || c.code;
+      if (String(cid).toUpperCase() === id.toUpperCase()) return c;
+    }
+    return null;
+  }
+
+  // Heuristic price normalisation: value from source is unknown in scale
+  // (could be rial or toman). We must not multiply/divide blindly.
+  function toToman(price, id) {
+    const n = Number(price);
+    if (!isFinite(n) || n <= 0) return null;
+    // If it looks like rial (>10,000,000 for dollar ~ 900,000 toman), it may be rial.
+    // But we do NOT auto-convert — we only sanity-check the magnitude.
+    // We return the number as-is to honour the "no blind ×10 / ÷10" rule.
+    return n;
+  }
+
+  function renderMarket(rows) {
+    let html = '';
+    let anyOk = false;
+    for (const id of Object.keys(MARKET_IDS)) {
+      const item = rows[id];
+      const label = MARKET_IDS[id];
+      if (!item) {
+        html += '<div class="market-row"><span class="m-label">' + label +
+                '</span><span class="m-price" style="color:var(--muted)">—</span></div>';
+        continue;
+      }
+      anyOk = true;
+      const price = toToman(item.price ?? item.value ?? item.last, id);
+      const change = item.change_percent ?? item.change ?? item.delta ?? null;
+      const changeNum = change == null ? null : Number(change);
+      const changeClass = changeNum == null ? '' : (changeNum > 0 ? 'up' : changeNum < 0 ? 'down' : '');
+      const arrow = changeNum == null ? '' : (changeNum > 0 ? '▲' : changeNum < 0 ? '▼' : '●');
+      const changeStr = changeNum == null ? '' :
+        (' ' + arrow + ' ' + toFa(Math.abs(changeNum).toFixed(2)) + '٪');
+      const priceStr = price == null ? '—' : fmtNum(price) + ' تومان';
+      html += '<div class="market-row"><div><div class="m-label">' + label + '</div>' +
+              '<div class="m-change ' + changeClass + '">' + changeStr + '</div></div>' +
+              '<div class="m-price">' + priceStr + '</div></div>';
+    }
+    marketBodyEl.innerHTML = html;
+
+    // meta: last update + source + staleness
+    let newest = 0;
+    for (const id of Object.keys(rows)) {
+      const it = rows[id];
+      if (!it) continue;
+      const ts = it.timestamp || it.updated_at || it.time || it.date;
+      const t = ts ? Date.parse(ts) : NaN;
+      if (!isNaN(t) && t > newest) newest = t;
+    }
+    let meta = 'منبع: iran-market';
+    if (newest) {
+      const ageMin = Math.round((Date.now() - newest) / 60000);
+      const when = new Date(newest).toLocaleString('fa-IR');
+      meta += ' — ثبت: ' + when;
+      if (ageMin > 60) meta += ' <span class="stale">(داده قدیمی: ' + toFa(ageMin) + ' دقیقه)</span>';
+    }
+    if (!anyOk) meta = 'هیچ قیمتی دریافت نشد. ' + meta;
+    marketMetaEl.innerHTML = meta;
+  }
+
+  async function fetchMarkets() {
+    if (marketInflight) return;
+    marketInflight = true;
+    try {
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 12000);
+      const r = await fetch(MARKET_URL, { signal: ctrl.signal, cache: 'no-store' });
+      clearTimeout(tid);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const json = await r.json();
+
+      const rows = {};
+      for (const id of Object.keys(MARKET_IDS)) {
+        rows[id] = extractItem(json, id);
+      }
+      renderMarket(rows);
+    } catch (e) {
+      const offline = !navigator.onLine;
+      marketBodyEl.innerHTML = '<p class="error-msg">' +
+        (offline ? 'اینترنت قطع است. قیمت‌ها در دسترس نیستند.' :
+         'دریافت قیمت‌ها ناموفق: ' + (e.message || 'خطای شبکه')) + '</p>';
+      marketMetaEl.textContent = '';
+    } finally {
+      marketInflight = false;
+      if (marketTimer) clearTimeout(marketTimer);
+      marketTimer = setTimeout(fetchMarkets, 5 * 60 * 1000);
+    }
+  }
+
+  /* ---------- ChatGPT answer + speech ---------- */
+  const cgptInputEl = $('cgptInput');
+  const cgptTextEl  = $('cgptText');
+  const speakStatusEl = $('speakStatus');
+
+  // Load saved answer
+  const savedAnswer = LS.get('pashmak.cgpt', '');
+  if (savedAnswer) {
+    cgptInputEl.value = savedAnswer;
+    cgptTextEl.textContent = savedAnswer;
+  }
+
+  function setAnswer(text) {
+    cgptInputEl.value = text || '';
+    cgptTextEl.textContent = text || '';
+    LS.set('pashmak.cgpt', text || '');
+  }
+
+  $('setCgptBtn').addEventListener('click', () => {
+    setAnswer(cgptInputEl.value.trim());
+    toast('پاسخ ذخیره شد');
+  });
+
+  $('clearCgptBtn').addEventListener('click', () => {
+    setAnswer('');
+    stopSpeaking();
+    toast('پاک شد');
+  });
+
+  $('pasteCgptBtn').addEventListener('click', async () => {
+    try {
+      const txt = await navigator.clipboard.readText();
+      if (txt) {
+        cgptInputEl.value = txt;
+        setAnswer(txt.trim());
+        toast('از کلیپ‌بورد خوانده شد');
+      } else toast('کلیپ‌بورد خالی است', true);
+    } catch {
+      toast('دسترسی به کلیپ‌بورد مجاز نیست؛ دستی بچسبانید', true);
+    }
+  });
+
+  $('copyCgptBtn').addEventListener('click', async () => {
+    const txt = cgptTextEl.textContent || '';
+    if (!txt) { toast('متنی برای کپی نیست', true); return; }
+    try {
+      await navigator.clipboard.writeText(txt);
+      toast('کپی شد');
+    } catch { toast('کپی ناموفق', true); }
+  });
+
+  // ---- Speech synthesis with per-sentence robot coordination ----
+  const synth = window.speechSynthesis;
+  let speechSession = 0;   // increments on every new speak/stop to invalidate old sessions
+  let isSpeakingNow = false;
+
+  function pickFaVoice() {
+    if (!synth) return null;
+    const voices = synth.getVoices();
+    let v = voices.find(x => /fa[-_]?IR/i.test(x.lang));
+    if (!v) v = voices.find(x => /^fa/i.test(x.lang));
+    return v || null;
+  }
+
+  // Split into sentences, keeping terminal punctuation
+  function splitSentences(text) {
+    const t = String(text).replace(/\s+/g, ' ').trim();
+    if (!t) return [];
+    // Match chunks ending in . ! ? (also Persian ۔ ؛ ؟ ، …) — keep punctuation
+    const re = /[^.!?؟!。！…]+[.!?؟!。！…]+|[^.!?؟!。！…]+$/g;
+    const out = [];
+    let m;
+    while ((m = re.exec(t)) !== null) {
+      const s = m[0].trim();
+      if (s) out.push(s);
+    }
+    return out.length ? out : [t];
+  }
+
+  function classifySentence(s) {
+    const last = s.trim().slice(-1);
+    if (last === '؟' || last === '?') return 'QUESTION';
+    if (last === '!' || last === '！') return 'EXCITED';
+    return 'NORMAL';
+  }
+
+  function speakSentence(text, session) {
+    return new Promise((resolve) => {
+      if (!synth || session !== speechSession) { resolve(); return; }
+      const u = new SpeechSynthesisUtterance(text);
+      const v = pickFaVoice();
+      if (v) u.voice = v;
+      u.lang = 'fa-IR';
+      u.rate = 1.0;
+      u.pitch = 1.0;
+
+      let settled = false;
+      const done = () => { if (settled) return; settled = true; resolve(); };
+
+      u.onend = done;
+      u.onerror = done;
+
+      synth.speak(u);
+
+      // Safety net: if onend never fires (common Chrome bug), resolve after estimate
+      const estimate = Math.min(15000, Math.max(1200, text.length * 90));
+      const guard = setTimeout(() => {
+        if (!settled) { try { synth.cancel(); } catch {} done(); }
+      }, estimate + 3000);
+      u._guard = guard;
+    });
+  }
+
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  async function speakAnswer() {
+    const text = (cgptTextEl.textContent || '').trim();
+    if (!text) { toast('متنی برای خواندن نیست', true); return; }
+    if (!synth) { toast('Web Speech API پشتیبانی نمی‌شود', true); return; }
+
+    // Invalidate any previous session
+    stopSpeaking(true);
+    const session = ++speechSession;
+    isSpeakingNow = true;
+    speakStatusEl.textContent = 'در حال خواندن…';
+
+    const sentences = splitSentences(text);
+
+    try {
+      for (let i = 0; i < sentences.length; i++) {
+        if (session !== speechSession) break; // stopped
+        const s = sentences[i];
+        const mode = classifySentence(s);
+
+        // Robot: STATE=TALKING, EYES per sentence type
+        sendCommand({ command: 'STATE', value: 'TALKING' }, { dedupe: false });
+        sendCommand({ command: 'EYES', mode }, { dedupe: false });
+
+        await speakSentence(s, session);
+
+        if (session !== speechSession) break;
+
+        // Between sentences: eyes → NORMAL + short pause
+        sendCommand({ command: 'EYES', mode: 'NORMAL' }, { dedupe: false });
+        await sleep(200);
+      }
+    } finally {
+      if (session === speechSession) {
+        isSpeakingNow = false;
+        speakStatusEl.textContent = '';
+        sendCommand({ command: 'EYES', mode: 'NORMAL' }, { dedupe: false });
+        sendCommand({ command: 'STATE', value: 'IDLE' }, { dedupe: false });
+      }
+    }
+  }
+
+  function stopSpeaking(silent) {
+    speechSession++;
+    isSpeakingNow = false;
+    try { if (synth) synth.cancel(); } catch {}
+    if (!silent) {
+      sendCommand({ command: 'EYES', mode: 'NORMAL' }, { dedupe: false });
+      sendCommand({ command: 'STATE', value: 'IDLE' }, { dedupe: false });
+      speakStatusEl.textContent = '';
+    }
+  }
+
+  $('speakBtn').addEventListener('click', speakAnswer);
+  $('stopSpeakBtn').addEventListener('click', () => stopSpeaking());
+
+  // Some browsers need voices loaded asynchronously
+  if (synth && typeof synth.onvoiceschanged !== 'undefined') {
+    synth.onvoiceschanged = () => { pickFaVoice(); };
+  }
+
+  /* ---------- Share Target handling ---------- */
+  // manifest.json declares /index.html?share=1&title=...&text=...&url=...
+  // sw.js redirects POST /share -> /index.html?share=1... via 303.
+  (function handleShare() {
+    const params = new URLSearchParams(location.search);
+    const isShare = params.has('share') || params.has('text') || params.has('url') || params.has('title');
+    if (!isShare) return;
+    const text = params.get('text') || '';
+    const title = params.get('title') || '';
+    const url = params.get('url') || '';
+
+    // Build best-effort content
+    let content = '';
+    if (text) content += text;
+    if (url && !text.includes(url)) content += (content ? '\n' : '') + url;
+    if (!content && title) content = title;
+
+    if (content) {
+      setAnswer(content.trim());
+      cgptTextEl.textContent = content.trim();
+      toast('پاسخ از اشتراک‌گذاری دریافت شد');
+      // Clean URL so reload doesn't re-inject
+      try { history.replaceState({}, '', location.pathname); } catch {}
+      // Scroll to ChatGPT card
+      const card = cgptTextEl.closest('.card');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      // Share produced no text — user must paste manually
+      toast('متنی از اشتراک دریافت نشد؛ دستی بچسبانید', true);
+    }
+  })();
+
+  /* ---------- Online/offline + initial fetches ---------- */
+  window.addEventListener('online', () => { toast('اینترنت وصل شد'); fetchWeather(); fetchMarkets(); });
+  window.addEventListener('offline', () => { toast('اینترنت قطع شد', true); });
+
+  // Initial load
+  fetchWeather();
+  fetchMarkets();
+
+  /* ---------- Service worker registration ---------- */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+
+  /* ---------- Small UX: prevent double-tap zoom on control area ---------- */
+  document.querySelectorAll('.dpad button, [data-eyes], [data-state]').forEach(b => {
+    b.addEventListener('dblclick', e => e.preventDefault());
+  });
+
+})();
+</script>
+</body>
+</html>
