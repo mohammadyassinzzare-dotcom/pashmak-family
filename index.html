@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<meta name="description" content="داشبورد کنترل و دستیار هوشمند ربات پشمک">
+<title>داشبورد پشمک</title>
+<link rel="manifest" href="./manifest.json">
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#141f30;--panel2:#1b2a40;--text:#f3f6fc;--muted:#aab7ca;--accent:#61d6c5;--border:#2b3b52;--danger:#ff8585}
+*{box-sizing:border-box}body{margin:0;padding:14px;background:linear-gradient(160deg,#101b2d,var(--bg));color:var(--text);font:15px/1.8 Tahoma,Arial,sans-serif}.container{max-width:800px;margin:auto}header{text-align:center;padding:12px 8px 20px}h1{margin:0;color:var(--accent);font-size:29px}h2{font-size:17px;color:var(--accent);margin:0 0 12px}.subtitle,.muted,.notice{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:15px;margin-bottom:2px;min-width:0}.full{grid-column:1/-1}.value{font-size:21px;font-weight:bold;overflow-wrap:anywhere}.muted,.notice{font-size:12px}.status{display:inline-block;padding:3px 11px;border-radius:24px;background:var(--panel2);border:1px solid var(--border);font-size:12px}.online,.positive{color:var(--accent)}.offline,.negative{color:var(--danger)}button{border:0;border-radius:12px;padding:11px 13px;background:var(--accent);color:#06201e;font-weight:bold;font-size:14px;cursor:pointer;font-family:inherit;touch-action:manipulation}button:active{transform:scale(.98)}button.secondary{background:var(--panel2);border:1px solid var(--border);color:var(--text)}button.danger,.stop{background:#6b3040;color:white}.buttons{display:flex;flex-wrap:wrap;gap:8px}.buttons button{flex:1 1 auto}.movement{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:390px;margin:14px auto;direction:ltr}.movement button{min-height:58px}.movement .empty{visibility:hidden}.movement .move{background:#244d5a;color:white}.movement .turn{background:#31415d;color:white}label{display:block;color:var(--muted);font-size:13px;margin-top:8px}input,textarea{width:100%;background:#0c1727;color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px;font:inherit;margin:5px 0 12px}textarea{min-height:110px;resize:vertical}.price-time{font-size:11px;color:var(--muted);overflow-wrap:anywhere}.eye-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.eye-grid button{background:var(--panel2);border:1px solid var(--border);color:var(--text);min-height:46px}.notice{margin-top:9px}@media(max-width:520px){body{padding:10px}.grid{grid-template-columns:1fr}h1{font-size:26px}.eye-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body><main class="container">
+<header><h1>🐾 پشمک</h1><div class="subtitle">داشبورد کنترل و دستیار هوشمند</div></header>
+<div class="grid">
+<section class="card"><h2>🕒 ساعت ایران</h2><div class="value" id="clock">--:--:--</div><div class="muted" id="date">در حال دریافت تاریخ...</div></section>
+<section class="card"><h2>🌤 آب‌وهوای یزد</h2><div class="value" id="weather">---</div><div class="muted" id="weatherDetails">---</div><div class="muted" id="weatherUpdated"></div></section>
+<section class="card"><h2>💵 دلار آزاد</h2><div class="value" id="usdPrice">---</div><div class="muted" id="usdChange">---</div><div class="price-time" id="usdTime">---</div></section>
+<section class="card"><h2>🥇 طلای ۱۸ عیار</h2><div class="value" id="goldPrice">---</div><div class="muted" id="goldChange">---</div><div class="price-time" id="goldTime">---</div></section>
+<section class="card full"><h2>🪙 سکه امامی</h2><div class="value" id="coinPrice">---</div><div class="muted" id="coinChange">---</div><div class="price-time" id="coinTime">---</div></section>
+<section class="card full"><h2>🎮 کنترل حرکت پشمک</h2><div class="muted">دکمه حرکت را نگه دار؛ با رهاکردن توقف ارسال می‌شود. <span class="status offline" id="robotStatus">اتصال بررسی نشده</span></div>
+<div class="movement"><button class="empty"> </button><button class="move" data-move="FORWARD">⬆️ جلو</button><button class="empty"> </button><button class="move" data-move="LEFT">⬅️ چپ</button><button class="stop" id="stopButton">⏹ توقف</button><button class="move" data-move="RIGHT">راست ➡️</button><button class="empty"> </button><button class="move" data-move="BACKWARD">⬇️ عقب</button><button class="empty"> </button></div>
+<div class="buttons"><button class="turn" data-move="TURN_LEFT">چرخش چپ ↶</button><button class="turn" data-move="TURN_RIGHT">چرخش راست ↷</button></div><div class="notice" id="movementMessage">آدرس ربات را در تنظیمات وارد کن.</div></section>
+<section class="card full"><h2>👀 حالت چشم‌ها</h2><div class="eye-grid">
+<button data-eye="NORMAL">👀 عادی</button><button data-eye="HAPPY">😊 خوشحال</button><button data-eye="SLEEPY">😴 خواب‌آلود</button><button data-eye="SURPRISED">😮 متعجب</button><button data-eye="BLINK">😉 پلک‌زدن</button><button data-eye="THINKING">🤔 فکرکردن</button>
+</div><div class="notice" id="eyeMessage">حالت انتخابی به ربات ارسال می‌شود.</div></section>
+<section class="card full"><h2>🖥 ارسال متن به OLED</h2><label for="oledText">متن کوتاه برای نمایشگر</label><textarea id="oledText" maxlength="100" placeholder="سلام! من پشمک هستم"></textarea><div class="buttons"><button id="sendOledButton">ارسال به OLED</button><button class="secondary" id="clearOledButton">پاک‌کردن کادر</button></div><div class="notice" id="oledMessage">پاسخ ChatGPT هرگز به OLED فرستاده نمی‌شود.</div></section>
+<section class="card full"><h2>🤖 وضعیت کاری ربات</h2><div class="value" id="robotState">IDLE</div><div class="buttons"><button data-state="LISTENING">🎤 شنیدن</button><button data-state="THINKING">🤔 فکرکردن</button><button data-state="TALKING">🗣 صحبت‌کردن</button><button class="secondary" data-state="IDLE">آماده‌باش</button></div><div class="buttons" style="margin-top:10px"><button class="secondary" id="checkRobotButton">بررسی اتصال</button></div><div class="notice" id="robotMessage">---</div></section>
+<section class="card full"><h2>💬 پاسخ ChatGPT</h2><div class="muted">پاسخ را از طریق Share بفرست یا در کادر وارد کن. متن فقط روی گوشی نمایش داده و خوانده می‌شود.</div><textarea id="chatResponse" placeholder="پاسخ ChatGPT اینجا..."></textarea><div class="buttons"><button id="speakButton">🔊 خواندن پاسخ</button><button class="secondary" id="stopSpeechButton">⏹ توقف صدا</button><button class="secondary" id="copyButton">کپی متن</button><button class="danger" id="clearResponseButton">پاک‌کردن</button></div><div class="notice" id="speechStatus">برای پخش صدا، خواندن پاسخ را بزن.</div></section>
+<section class="card full"><h2>⚙️ تنظیمات اتصال ربات</h2><label for="robotBase">آدرس پایه ربات</label><input id="robotBase" placeholder="مثلاً http://192.168.4.1" autocomplete="off"><label for="commandPath">مسیر فرمان</label><input id="commandPath" value="/api/command"><label for="statusPath">مسیر وضعیت</label><input id="statusPath" value="/api/status"><div class="buttons"><button id="saveSettingsButton">ذخیره تنظیمات</button><button class="secondary" id="loadSettingsButton">بارگذاری تنظیمات</button></div><div class="notice" id="settingsMessage">تنظیمات در همین گوشی ذخیره می‌شوند.</div></section>
+<section class="card full"><h2>ℹ️ منبع داده</h2><div class="muted" id="priceStatus">در انتظار دریافت قیمت‌ها...</div><div class="muted">قیمت‌ها از فایل JSON ایران مارکت؛ واحد تومان. بررسی مجدد هر ۵ دقیقه.</div><div class="muted">آب‌وهوا: Open-Meteo | یزد</div></section>
+</div></main>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const PRICE_URL="https://raw.githubusercontent.com/iran-market/iran-market.github.io/main/data/popular.json";
+const WEATHER_URL="https://api.open-meteo.com/v1/forecast?latitude=31.8974&longitude=54.3569&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=Asia%2FTehran";
+const nf=new Intl.NumberFormat("fa-IR");
+const fmt=v=>Number.isFinite(Number(v))?nf.format(Number(v)):"---";
+
+/* ساعت مستقل از اینترنت */
+function updateClock(){const d=new Date();$("clock").textContent=new Intl.DateTimeFormat("fa-IR",{timeZone:"Asia/Tehran",hour:"2-digit",minute:"2-digit",second:"2-digit"}).format(d);$("date").textContent=new Intl.DateTimeFormat("fa-IR",{timeZone:"Asia/Tehran",weekday:"long",year:"numeric",month:"long",day:"numeric"}).format(d)}
+updateClock();setInterval(updateClock,1000);
+
+/* آب‌وهوا */
+const weatherText={0:"آسمان صاف",1:"عمدتاً صاف",2:"نیمه‌ابری",3:"ابری",45:"مه",48:"مه یخ‌زده",51:"نم‌نم باران سبک",53:"نم‌نم باران",55:"نم‌نم باران شدید",61:"باران سبک",63:"باران",65:"باران شدید",71:"برف سبک",73:"برف",75:"برف شدید",80:"رگبار پراکنده",81:"رگبار",82:"رگبار شدید",95:"رعدوبرق",96:"رعدوبرق و تگرگ",99:"رعدوبرق و تگرگ شدید"};
+async function loadWeather(){try{const r=await fetch(WEATHER_URL,{cache:"no-store"});if(!r.ok)throw Error("HTTP "+r.status);const c=(await r.json()).current;if(!c)throw Error("داده جاری خالی است");$("weather").textContent=fmt(c.temperature_2m)+" درجه";$("weatherDetails").textContent=(weatherText[c.weather_code]||"وضعیت نامشخص")+" | احساس‌شده "+fmt(c.apparent_temperature)+"° | رطوبت "+fmt(c.relative_humidity_2m)+"% | باد "+fmt(c.wind_speed_10m)+" km/h";$("weatherUpdated").textContent="آخرین دریافت: "+new Intl.DateTimeFormat("fa-IR",{timeZone:"Asia/Tehran",hour:"2-digit",minute:"2-digit"}).format(new Date())}catch(e){$("weather").textContent="دریافت نشد";$("weatherDetails").textContent="خطای دریافت: "+e.message;console.error("weather",e)}}
+
+/* قیمت‌ها: ساختار داده کنترل می‌شود تا خطای هر مورد کل داشبورد را متوقف نکند */
+function findItem(json,symbol){const rows=Array.isArray(json?.data)?json.data:Array.isArray(json?.items)?json.items:Array.isArray(json)?json:[];return rows.find(x=>x&&(x.symbol===symbol||x.code===symbol||x.id===symbol))||null}
+function itemTime(x){if(x.timestamp_jalali)return x.timestamp_jalali;if(x.timestamp_tehran)return x.timestamp_tehran;if(x.updated_at)return x.updated_at;if(x.timestamp){let t=x.timestamp;if(typeof t==="string"&&/^\d+$/.test(t))t=Number(t);let d=new Date(typeof t==="number"&&t<1e12?t*1000:t);if(!isNaN(d))return new Intl.DateTimeFormat("fa-IR",{timeZone:"Asia/Tehran",dateStyle:"short",timeStyle:"short"}).format(d)}return"زمان ثبت موجود نیست"}
+function showPrice(key,x,unit){const p=$(key+"Price"),c=$(key+"Change"),t=$(key+"Time");const value=x&&(x.price??x.value??x.last??x.current_price);if(value==null||!Number.isFinite(Number(value))){p.textContent="---";c.textContent="داده قیمت این نماد موجود نیست";c.className="muted";t.textContent="";return}p.textContent=fmt(value)+" تومان"+(unit?" "+unit:"");const ch=x.change_pct??x.change_percent??x.percent_change;if(ch!=null&&Number.isFinite(Number(ch))){const n=Number(ch);c.textContent="تغییر: "+(n>0?"+":"")+fmt(n)+"%";c.className="muted "+(n>0?"positive":n<0?"negative":"")}else{c.textContent="درصد تغییر موجود نیست";c.className="muted"}t.textContent="زمان ثبت: "+itemTime(x)+(x.source?" | منبع: "+x.source:"")+(x.stale?" | داده قدیمی":"")}
+async function loadPrices(){try{const r=await fetch(PRICE_URL,{cache:"no-store"});if(!r.ok)throw Error("HTTP "+r.status);const j=await r.json();showPrice("usd",findItem(j,"USD_IRR_FREE"),"");showPrice("gold",findItem(j,"GOLD_18K_IRR"),"هر گرم");showPrice("coin",findItem(j,"COIN_EMAMI_IRR"),"هر قطعه");const m=j.meta||{};$("priceStatus").textContent="آخرین بروزرسانی فایل: "+(m.updated_at||m.published_at||"نامشخص")+" | فاصله بروزرسانی منبع: "+(m.update_frequency_minutes||"نامشخص")+" دقیقه"}catch(e){["usd","gold","coin"].forEach(k=>{if($(k+"Price").textContent==="---")$(k+"Change").textContent="دریافت ناموفق"})$("priceStatus").textContent="خطای دریافت قیمت: "+e.message;console.error("prices",e)}}
+loadWeather();loadPrices();setInterval(loadWeather,600000);setInterval(loadPrices,300000);
+
+/* تنظیمات ربات */
+function loadSettings(){$("robotBase").value=localStorage.getItem("pashmak_robotBase")||"";$("commandPath").value=localStorage.getItem("pashmak_commandPath")||"/api/command";$("statusPath").value=localStorage.getItem("pashmak_statusPath")||"/api/status";$("settingsMessage").textContent="تنظیمات بارگذاری شد."}
+function saveSettings(){const b=$("robotBase").value.trim().replace(/\/+$/,"");let c=$("commandPath").value.trim()||"/api/command",s=$("statusPath").value.trim()||"/api/status";if(!b){$("settingsMessage").textContent="ابتدا آدرس ربات را وارد کن.";return}if(!c.startsWith("/"))c="/"+c;if(!s.startsWith("/"))s="/"+s;localStorage.setItem("pashmak_robotBase",b);localStorage.setItem("pashmak_commandPath",c);localStorage.setItem("pashmak_statusPath",s);$("settingsMessage").textContent="تنظیمات ذخیره شد."}
+function robotUrls(){const b=$("robotBase").value.trim().replace(/\/+$/,"");if(!b)throw Error("آدرس ربات وارد نشده است.");const c=$("commandPath").value.trim()||"/api/command",s=$("statusPath").value.trim()||"/api/status";return{command:b+(c.startsWith("/")?c:"/"+c),status:b+(s.startsWith("/")?s:"/"+s)}}
+async function timedFetch(url,options={}){const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),4000);try{return await fetch(url,{...options,signal:ctrl.signal,cache:"no-store"})}finally{clearTimeout(timer)}}
+async function sendPayload(payload){const u=robotUrls(),r=await timedFetch(u.command,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});if(!r.ok)throw Error("HTTP "+r.status);return r}
+async function send(payload,el,success){try{await sendPayload(payload);if(el)el.textContent=success||"فرمان ارسال شد."}catch(e){if(el)el.textContent="ارسال ناموفق: "+e.message;console.warn("robot command",e)}}
+async function checkRobot(){try{const u=robotUrls(),r=await timedFetch(u.status);if(!r.ok)throw Error("HTTP "+r.status);const d=await r.json();$("robotStatus").textContent="ربات متصل";$("robotStatus").className="status online";$("robotMessage").textContent="ارتباط برقرار است"+(d.state?" | وضعیت: "+d.state:"");if(d.state)$("robotState").textContent=d.state}catch(e){$("robotStatus").textContent="عدم دسترسی";$("robotStatus").className="status offline";$("robotMessage").textContent="اتصال ناموفق: "+e.message}}
+function setState(v){$("robotState").textContent=v;send({command:"STATE",value:v},$("robotMessage"),"حالت "+v+" ارسال شد.")}
+$("saveSettingsButton").onclick=saveSettings;$("loadSettingsButton").onclick=loadSettings;$("checkRobotButton").onclick=checkRobot;loadSettings();
+document.querySelectorAll("[data-state]").forEach(b=>b.addEventListener("click",()=>setState(b.dataset.state)));
+document.querySelectorAll("[data-eye]").forEach(b=>b.addEventListener("click",()=>send({command:"EYES",mode:b.dataset.eye},$("eyeMessage"),"حالت چشم "+b.dataset.eye+" ارسال شد.")));
+$("sendOledButton").onclick=()=>{const text=$("oledText").value.trim();if(!text){$("oledMessage").textContent="متن را وارد کن.";return}send({command:"OLED_TEXT",text},$("oledMessage"),"متن به OLED ارسال شد.")};
+$("clearOledButton").onclick=()=>$("oledText").value="";
+
+/* حرکت: با رها کردن یا خروج از صفحه توقف درخواست می‌شود */
+let activeMove=null;
+function stopMove(){if(!activeMove)return;activeMove=null;send({command:"STOP"},$("movementMessage"),"توقف ارسال شد.")}
+document.querySelectorAll("[data-move]").forEach(b=>{b.addEventListener("pointerdown",e=>{e.preventDefault();if(activeMove)return;activeMove=b.dataset.move;try{b.setPointerCapture(e.pointerId)}catch(_){}send({command:activeMove},$("movementMessage"),"فرمان "+activeMove+" ارسال شد.")});b.addEventListener("pointerup",stopMove);b.addEventListener("pointercancel",stopMove);b.addEventListener("lostpointercapture",stopMove)});
+$("stopButton").onclick=stopMove;window.addEventListener("pointerup",stopMove);window.addEventListener("blur",stopMove);document.addEventListener("visibilitychange",()=>{if(document.hidden)stopMove()});
+
+/* خواندن جمله‌به‌جمله؛ متن پاسخ به هیچ‌وجه روی OLED فرستاده نمی‌شود */
+let speechToken=0;
+function speechCommand(mode){send({command:"STATE",value:"TALKING"});send({command:"EYES",mode})}
+function endSpeech(token,message){if(token!==speechToken)return;send({command:"EYES",mode:"NORMAL"});send({command:"STATE",value:"IDLE"});$("robotState").textContent="IDLE";$("speechStatus").textContent=message||"خواندن پاسخ تمام شد."}
+function sentencesOf(text){const a=text.replace(/\r/g," ").trim().match(/[^.!?؟！]+[.!?؟！]+|[^.!?؟！]+$/gu);return(a||[]).map(x=>x.trim()).filter(Boolean)}
+function eyeFor(s){if(/[؟?]\s*$/.test(s))return"QUESTION";if(/[!！]\s*$/.test(s))return"EXCITED";return"TALKING"}
+function sayAt(list,i,token){if(token!==speechToken)return;if(i>=list.length){endSpeech(token);return}const s=list[i],mode=eyeFor(s);speechCommand(mode);$("speechStatus").textContent="در حال خواندن جمله "+(i+1)+" از "+list.length;const u=new SpeechSynthesisUtterance(s);u.lang="fa-IR";u.rate=1;u.onend=()=>{if(token!==speechToken)return;send({command:"EYES",mode:"NORMAL"});setTimeout(()=>sayAt(list,i+1,token),200)};u.onerror=e=>endSpeech(token,"خطا در پخش صدا: "+(e.error||"نامشخص"));speechSynthesis.speak(u)}
+$("speakButton").onclick=()=>{const text=$("chatResponse").value.trim();if(!text){$("speechStatus").textContent="ابتدا متن پاسخ را وارد کن.";return}if(!("speechSynthesis"in window)){ $("speechStatus").textContent="مرورگر از پخش گفتار پشتیبانی نمی‌کند.";return}speechToken++;const token=speechToken;speechSynthesis.cancel();const list=sentencesOf(text);if(!list.length){$("speechStatus").textContent="متن قابل خواندن نیست.";return}speechCommand("TALKING");sayAt(list,0,token)};
+$("stopSpeechButton").onclick=()=>{speechToken++;if("speechSynthesis"in window)speechSynthesis.cancel();send({command:"EYES",mode:"NORMAL"});send({command:"STATE",value:"IDLE"});$("robotState").textContent="IDLE";$("speechStatus").textContent="پخش صدا متوقف شد."};
+$("clearResponseButton").onclick=()=>{$("chatResponse").value="";$("speechStatus").textContent="متن پاک شد."};
+$("copyButton").onclick=async()=>{try{await navigator.clipboard.writeText($("chatResponse").value);$("speechStatus").textContent="متن کپی شد."}catch(e){$("speechStatus").textContent="کپی خودکار ممکن نیست؛ متن را دستی انتخاب کن."}};
+
+/* دریافت اشتراک‌گذاری اندروید: بعضی برنامه‌ها فقط URL را Share می‌کنند */
+(()=>{const p=new URLSearchParams(location.search),parts=[p.get("title"),p.get("text"),p.get("url")].filter(Boolean);if(parts.length){$("chatResponse").value=parts.join("\n");$("speechStatus").textContent="محتوای اشتراک‌گذاری‌شده دریافت شد؛ اگر فقط لینک است، متن پاسخ را کپی و اینجا جای‌گذاری کن.";history.replaceState({},document.title,location.pathname)}})();
+
+/* PWA */
+if("serviceWorker"in navigator&&location.protocol==="https:"){addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.warn))}
+</script>
+</body>
+</html>
